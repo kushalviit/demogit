@@ -27,6 +27,12 @@ class DataGen:
         df = df.dropna()
         gene_names = df.columns.to_list()[1:]
         return df[gene_names].to_numpy()
+
+    
+    def get_batch(self,begin_idx,end_idx,i,e,lock):
+        with lock:
+            print(f'epoch: {e},iteration: {i}')
+            return self.data[begin_idx:end_idx,:]
     
     def data_gen(self,epoch):
         for j in range(self.iter):
@@ -40,7 +46,7 @@ class DataGen:
         print(self.length)
         print(self.bath_size)
 
-
+#### hi this new comment
 
 
 
@@ -57,6 +63,7 @@ i =0
 iter = batch_processor.get_iter()
 print(f'Iter Count: {iter}')
 
+
 parallel = False
 
 max_workers = 10
@@ -66,8 +73,12 @@ while(i<100):
     print(f'Epoch: {i}')
     start_time = time.time()
     if parallel:
-        pass
+        lock = Lock()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for k in range(iter):
+                print(executor.submit(batch_processor.get_batch, k*batch_size, (k+1)*batch_size,k,i,lock).result().shape)
         time_exec = time_exec + (time.time()-start_time)
+        
     else:
         for batch in batch_processor.data_gen(epoch=i):
             print(f'batch size: {batch.shape}')
